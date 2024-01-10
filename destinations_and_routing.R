@@ -41,7 +41,6 @@ dest_list <- c("zlobek",
                "plywalnia")
 
 #Calculate no. of opportunities for the buildings layer
-
 for (i in dest_list) {
   sel_dest <- subset(dest, grepl(i, dest$FUNSZCZ))
   add_col <- lengths(st_intersects(dest_grid, sel_dest))
@@ -125,7 +124,7 @@ write.csv(cycling_safe, file = paste0("./results/", city, "/cycling_safe_accessi
 cycling_all <- accessibility(r5r_core, 
                               origins = origin_points,
                               destinations = destinations_df,
-                              opportunities_colnames = dest_list,
+                              opportunities_colnames = dest_list[!dest_list %in% c("zlobek", "przedszkole", "szkolaPodstawowa", "szkolaPonadpodstawowa")],
                               mode = "BICYCLE",
                               max_lts = 4,
                               decay_function = "step",
@@ -140,7 +139,7 @@ pt_peak <- accessibility(r5r_core,
                          destinations = destinations_df,
                          opportunities_colnames = dest_list,
                          mode = c("WALK", "TRANSIT"),
-                         departure_datetime = as.POSIXct("15-11-2023 07:00:00", format = "%d-%m-%Y %H:%M:%S"),
+                         departure_datetime = as.POSIXct("17-11-2022 07:00:00", format = "%d-%m-%Y %H:%M:%S"),
                          decay_function = "step",
                          cutoffs = 31)
 
@@ -160,7 +159,7 @@ pt_off <- accessibility(r5r_core,
                                                                             "hipermarketLubSupermarket", 
                                                                             "centrumHandlowe")],
                         mode = c("WALK", "TRANSIT"),
-                        departure_datetime = as.POSIXct("15-11-2023 22:00:00", format = "%d-%m-%Y %H:%M:%S"),
+                        departure_datetime = as.POSIXct("17-11-2022 22:00:00", format = "%d-%m-%Y %H:%M:%S"),
                         decay_function = "step",
                         cutoffs = 46)
 
@@ -173,7 +172,7 @@ pt_sat <- accessibility(r5r_core,
                         destinations = destinations_df,
                         opportunities_colnames = dest_list[!dest_list %in% c("zlobek", "przedszkole", "szkolaPodstawowa", "szkolaPonadpodstawowa")],
                         mode = c("WALK", "TRANSIT"),
-                        departure_datetime = as.POSIXct("18-11-2023 13:00:00", format = "%d-%m-%Y %H:%M:%S"),
+                        departure_datetime = as.POSIXct("19-11-2022 13:00:00", format = "%d-%m-%Y %H:%M:%S"),
                         decay_function = "step",
                         cutoffs = 46)
 
@@ -188,29 +187,49 @@ pt_peak_std <- as.data.table(cbind(as.numeric(pt_peak$id), scale(pt_peak[,4:ncol
 pt_off_std <- as.data.table(cbind(as.numeric(pt_off$id), scale(pt_off[,4:ncol(pt_off)])))
 pt_sat_std <- as.data.table(cbind(as.numeric(pt_sat$id), scale(pt_sat[,4:ncol(pt_sat)])))
 
-#Aggregate scores
-walking_score <- as.data.table(cbind(as.numeric(walking$id), rowMeans(walking_std[,2:ncol(walking_std)])))
-cycling_safe_score <- as.data.table(cbind(as.numeric(cycling_safe$id), rowMeans(cycling_safe_std[,2:ncol(cycling_safe_std)])))
-cycling_all_score <- as.data.table(cbind(as.numeric(cycling_all$id), rowMeans(cycling_all_std[,2:ncol(cycling_all_std)])))
-pt_peak_score <- as.data.table(cbind(as.numeric(pt_peak$id), rowMeans(pt_peak_std[,2:ncol(pt_peak_std)])))
-pt_off_score <- as.data.table(cbind(as.numeric(pt_off$id), rowMeans(pt_off_std[,2:ncol(pt_off_std)])))
-pt_sat_score <- as.data.table(cbind(as.numeric(pt_sat$id), rowMeans(pt_sat_std[,2:ncol(pt_sat_std)])))
+names(walking_std) <- paste0("walking_", names(walking_std))
+names(cycling_safe_std) <- paste0("cycling_safe_", names(cycling_safe_std))
+names(cycling_all_std) <- paste0("cycling_all_", names(cycling_all_std))
+names(pt_peak_std) <- paste0("pt_peak_", names(pt_peak_std))
+names(pt_off_std) <- paste0("pt_off_", names(pt_off_std))
+names(pt_sat_std) <- paste0("pt_sat_", names(pt_sat_std))
 
-acc_scores <- walking_score %>% 
-  left_join(cycling_safe_score, by = "V1") %>% 
-  left_join(cycling_all_score, by = "V1") %>% 
-  left_join(pt_peak_score, by = "V1") %>% 
-  left_join(pt_off_score, by = "V1") %>% 
-  left_join(pt_sat_score, by = "V1")
+colnames(walking_std) [1] <- "id"
+colnames(cycling_safe_std) [1] <- "id"
+colnames(cycling_all_std) [1] <- "id"
+colnames(pt_peak_std) [1] <- "id"
+colnames(pt_off_std) [1] <- "id"
+colnames(pt_sat_std) [1] <- "id"
 
-names(acc_scores) <- c("id", "walking_score", "cycling_safe_score", "cycling_all_score", "pt_peak_score", "pt_off_score", "pt_sat_score")
+# Combine results into one large table
+acc_combined <- walking_std %>% 
+  left_join(cycling_safe_std, by = "id") %>% 
+  left_join(cycling_all_std, by = "id") %>% 
+  left_join(pt_peak_std, by = "id") %>% 
+  left_join(pt_off_std, by = "id") %>% 
+  left_join(pt_sat_std, by = "id")
+  
+acc_combined$acc_schools <- rowMeans(select(acc_combined, contains("zlobek") | contains("przedszkole") | contains("szkolaPodstawowa") | contains("szkolaPonadpodstawowa")))
+acc_combined$acc_jobs <- rowMeans(select(acc_combined, contains("produkcyjny") | contains("siedzibaFirmyLubFirm")))
+acc_combined$acc_healthcare <- rowMeans(select(acc_combined, contains("apteka") | contains("placowkaOchronyZdrowia") | contains("szpital")))
+acc_combined$acc_other <- rowMeans(select(acc_combined, contains("szkolaWyzsza") | 
+                                            contains("kino") | 
+                                            contains("teatr") | 
+                                            contains("muzeum") | 
+                                            contains("biblioteka") | 
+                                            contains("domKultury") |
+                                            contains("pawilonHandlowoUslugowy") |
+                                            contains("domTowarowyLubHandlowy") |
+                                            contains("hipermaketLubSupermarket") |
+                                            contains("centrumHandlowe") |
+                                            contains("halaSportowa") |
+                                            contains("plywalnia")))
 
-acc_scores <- acc_scores %>% mutate(cycling_score = rowMeans(acc_scores[,cycling_safe_score:cycling_all_score]))
-acc_scores <- acc_scores %>% mutate(pt_score = rowMeans(acc_scores[,pt_peak_score:pt_sat_score]))
-acc_scores <- acc_scores %>% mutate(average_score = rowMeans(acc_scores[,2:ncol(acc_scores)]))
+write.csv(acc_combined, file = paste0("./results/", city, "/acc_combined.csv"), row.names = FALSE)
 
-origin_acc_scores <- origin_points %>% left_join(acc_scores, by = "id")
-write.csv(origin_acc_scores, file = paste0("./results/", city, "/aggregate_results.csv"))
+# Merge with spatial coords
+origin_acc_scores <- origin_points %>% left_join(acc_combined, by = "id")
+write.csv(origin_acc_scores, file = paste0("./results/", city, "/acc_combined_coords.csv"))
 
 grid <- st_read(dsn = "origin_grid.gpkg", layer = "full_grid", fid_column_name = "id")
 grid <- subset(grid, cityname == city, select = c("ID_GRID", "res_0_14", "res_15_64", "res_65_"))
