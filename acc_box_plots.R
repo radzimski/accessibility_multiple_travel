@@ -26,4 +26,12 @@ acc_other_exp <- acc_other %>% subset(res >0) %>% uncount(res) %>% rename(acc = 
 
 acc_summary <- rbind(acc_schools_exp, acc_jobs_exp, acc_health_exp, acc_other_exp)
 
-ggplot(data = subset(acc_summary, income_class != "NA"), aes(x = type, y = acc, fill = combined_class)) + geom_boxplot()
+#Reorder factors
+acc_summary$combined_class <- factor(acc_summary$combined_class, levels = c("LL", "LM", "LH", "HL", "HM", "HH"))
+acc_summary$type <- factor(acc_summary$type, levels = c("Schools", "Jobs", "Healthcare", "Other"))
+
+#Plot by neighborhood type and destination category
+ggplot(data = subset(acc_summary, income_class != "NA"), aes(x = combined_class, y = acc, col = type)) + geom_boxplot() + labs(x = "Neighbourhood type", y = "Accessibility score", col = "Opportinity \n type") + theme_light()
+
+dir.create("./figures")
+ggsave(filename = paste0("./figures/", city, "_acc_boxplot.png"), width = 24, height = 16, units = "cm")
