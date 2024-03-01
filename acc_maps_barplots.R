@@ -80,7 +80,7 @@ schools_moran %>%
   mutate(pysal = ifelse(p_folded_sim <= 0.1, as.character(pysal), NA)) %>% 
   subset(!is.na(combined_class)) %>%
   filter(pysal == "Low-Low") %>% 
-  ggplot(aes(x = cityname, y = res, fill = combined_class)) +
+  ggplot(aes(x = cityname, y = res_0_14, fill = combined_class)) +
   geom_bar(position = "fill", stat = "identity") +
   scale_fill_manual(name = "Neighbourhood \ntype", values = c("#b2182b", "#ef8a62", "#fddbc7", "#d1e5f0", "#67a9cf", "#2166ac")) +
   scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
@@ -111,7 +111,7 @@ jobs_moran %>%
   mutate(pysal = ifelse(p_folded_sim <= 0.1, as.character(pysal), NA)) %>% 
   subset(!is.na(combined_class)) %>%
   filter(pysal == "Low-Low") %>% 
-  ggplot(aes(x = cityname, y = res, fill = combined_class)) +
+  ggplot(aes(x = cityname, y = res_15_64, fill = combined_class)) +
   geom_bar(position = "fill", stat = "identity") +
   scale_fill_manual(name = "Neighbourhood \ntype", values = c("#b2182b", "#ef8a62", "#fddbc7", "#d1e5f0", "#67a9cf", "#2166ac")) +
   scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
