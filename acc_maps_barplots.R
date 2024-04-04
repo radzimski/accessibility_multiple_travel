@@ -123,9 +123,9 @@ schools_moran <- acc_weighted %>%
 #Population by cluster and neighborhood type
 schools_moran %>% 
   tidyr::unnest(moran) %>% 
-  mutate(pysal = ifelse(p_folded_sim <= 0.1, as.character(pysal), NA)) %>% 
+  mutate(pysal = ifelse(p_folded_sim <= 0.1, as.character(pysal), "Not significant")) %>% 
   subset(!is.na(vulnerability)) %>%
-  filter(pysal == "Low-Low" | pysal == "High-High" | is.na(pysal)) %>% 
+  filter(pysal == "Low-Low" | pysal == "High-High" | pysal ==  "Not significant") %>% 
   ggplot(aes(x = cityname, y = res_0_14, fill = vulnerability)) +
   geom_bar(position = "fill", stat = "identity") +
   facet_grid(~pysal) +
@@ -155,9 +155,9 @@ jobs_moran <- acc_weighted %>%
 #Population by cluster and neighborhood type
 jobs_moran %>% 
   tidyr::unnest(moran) %>% 
-  mutate(pysal = ifelse(p_folded_sim <= 0.1, as.character(pysal), NA)) %>% 
+  mutate(pysal = ifelse(p_folded_sim <= 0.1, as.character(pysal), "Not significant")) %>% 
   subset(!is.na(vulnerability)) %>%
-  filter(pysal == "Low-Low" | pysal == "High-High" | is.na(pysal)) %>% 
+  filter(pysal == "Low-Low" | pysal == "High-High" | pysal == "Not significant") %>% 
   ggplot(aes(x = cityname, y = res_15_64 + res_65_, fill = vulnerability)) +
   geom_bar(position = "fill", stat = "identity") +
   facet_grid(~pysal) +
@@ -187,9 +187,9 @@ healthcare_moran <- acc_weighted %>%
 #Population by cluster and neighborhood type
 healthcare_moran %>% 
   tidyr::unnest(moran) %>% 
-  mutate(pysal = ifelse(p_folded_sim <= 0.1, as.character(pysal), NA)) %>% 
+  mutate(pysal = ifelse(p_folded_sim <= 0.1, as.character(pysal), "Not significant")) %>% 
   subset(!is.na(vulnerability)) %>%
-  filter(pysal == "Low-Low" | pysal == "High-High" | is.na(pysal)) %>% 
+  filter(pysal == "Low-Low" | pysal == "High-High" | pysal == "Not significant") %>% 
   ggplot(aes(x = cityname, y = res, fill = vulnerability)) +
   geom_bar(position = "fill", stat = "identity") +
   facet_grid(~pysal) +
