@@ -13,27 +13,6 @@ acc_combined <- rbind(gdansk, krakow, poznan, wroclaw)
 acc_combined$combined_class <- factor(acc_combined$combined_class, levels = c("LL", "LM", "LH", "HL", "HM", "HH"))
 acc_combined$cityname <- factor(acc_combined$cityname, levels = c("gdansk", "krakow", "poznan", "wroclaw"))
 acc_combined$cityname <- recode(acc_combined$cityname, gdansk = "Gdańsk", krakow = "Kraków", poznan = "Poznań", wroclaw = "Wrocław")
-
-#Demographic dependence types
-acc_combined$dep_old <- acc_combined$res_65_/acc_combined$res_15_64
-acc_combined$dep_young <- acc_combined$res_0_14/acc_combined$res_15_64
-acc_combined$dep_type <- "OT"
-acc_combined$dep_type[acc_combined$res == 0] <- NA
-acc_combined$dep_type[acc_combined$dep_old > median(acc_combined$dep_old, na.rm = TRUE)] <- "HO" #High old age dependency
-acc_combined$dep_type[acc_combined$dep_young > median(acc_combined$dep_young, na.rm = TRUE)] <- "HY" #High young age dependency
-acc_combined$dep_type[acc_combined$dep_old > median(acc_combined$dep_old, na.rm = TRUE) & acc_combined$dep_young > median(acc_combined$dep_young, na.rm = TRUE)] <- "HD" #High both
-
-#Vulnerability classes
-acc_combined$vulnerability <- NA
-acc_combined$vulnerability[acc_combined$res > 0 ] <- "Low"
-acc_combined$vulnerability[(acc_combined$dep_old > median(acc_combined$dep_old, na.rm = TRUE) &
-                              acc_combined$dep_old < quantile(acc_combined$dep_old, probs = 0.75, na.rm = TRUE)) | 
-                              (acc_combined$dep_young > median(acc_combined$dep_young, na.rm = TRUE) &
-                                acc_combined$dep_young < quantile(acc_combined$dep_young, probs = 0.75, na.rm = TRUE)) &
-                             acc_combined$income_class == "L"] <- "Moderate"
-acc_combined$vulnerability[(acc_combined$dep_old >= quantile(acc_combined$dep_old, probs = 0.75, na.rm = TRUE) | 
-                              acc_combined$dep_young >= quantile(acc_combined$dep_young, probs = 0.75, na.rm = TRUE)) &
-                             acc_combined$income_class == "L"] <- "High"
 acc_combined$vulnerability <- factor(acc_combined$vulnerability, levels = c("High", "Moderate", "Low"))
 
 #Demographic type map
@@ -99,6 +78,24 @@ tm_shape(acc_combined) +
 
 tmap_save(filename = "./figures/acc_jobs_map.png", width = 24, height = 20, units = "cm")
 
+#Accessibility to retail map
+tm_shape(acc_combined) + 
+  tm_polygons(fill = "acc_retail", title = "Accessibility \nscore\n", style = "quantile") + 
+  tm_layout(legend.frame = FALSE) + 
+  tm_facets(by = "cityname") +
+  tm_scalebar(position = c("left", "bottom"))
+
+tmap_save(filename = "./figures/acc_retail_map.png", width = 24, height = 20, units = "cm")
+
+#Accessibility to urban green map
+tm_shape(acc_combined) + 
+  tm_polygons(fill = "acc_green", title = "Accessibility \nscore\n", style = "quantile", palette = "-plasma") + 
+  tm_layout(legend.frame = FALSE) + 
+  tm_facets(by = "cityname") +
+  tm_scalebar(position = c("left", "bottom"))
+
+tmap_save(filename = "./figures/acc_green_map.png", width = 24, height = 20, units = "cm")
+
 #Accessibility to other opportunities map
 tm_shape(acc_combined) + 
   tm_polygons(fill = "acc_other", title = "Accessibility \nscore\n", style = "quantile") + 
@@ -123,7 +120,7 @@ acc_weighted <- acc_combined %>%
 schools_moran <- acc_weighted %>% 
   mutate(moran = local_moran(acc_schools, nb, wt))
 
-#Population in the low-low cluster by neighborhood type
+#Population by cluster and neighborhood type
 schools_moran %>% 
   tidyr::unnest(moran) %>% 
   mutate(pysal = ifelse(p_folded_sim <= 0.1, as.character(pysal), NA)) %>% 
@@ -155,7 +152,7 @@ tmap_save(filename = "./figures/schools_moran.jpg", width = 24, height = 20, uni
 jobs_moran <- acc_weighted %>% 
   mutate(moran = local_moran(acc_jobs, nb, wt))
 
-#Population in the low-low cluster by neighborhood type
+#Population by cluster and neighborhood type
 jobs_moran %>% 
   tidyr::unnest(moran) %>% 
   mutate(pysal = ifelse(p_folded_sim <= 0.1, as.character(pysal), NA)) %>% 
@@ -187,7 +184,7 @@ tmap_save(filename = "./figures/jobs_moran.jpg", width = 24, height = 20, units 
 healthcare_moran <- acc_weighted %>% 
   mutate(moran = local_moran(acc_healthcare, nb, wt))
 
-#Population in the low-low cluster by neighborhood type
+#Population by cluster and neighborhood type
 healthcare_moran %>% 
   tidyr::unnest(moran) %>% 
   mutate(pysal = ifelse(p_folded_sim <= 0.1, as.character(pysal), NA)) %>% 
@@ -216,27 +213,29 @@ healthcare_moran %>%
 
 tmap_save(filename = "./figures/healthcare_moran.jpg", width = 24, height = 20, units = "cm")
 
-#Other
-other_moran <- acc_weighted %>% 
-  mutate(moran = local_moran(acc_other, nb, wt))
+#Retail
+retail_moran <- acc_weighted %>% 
+  mutate(moran = local_moran(acc_retail, nb, wt))
 
-#Population in the low-low cluster by neighborhood type
-other_moran %>% 
+#Population by cluster and neighborhood type
+retail_moran %>% 
   tidyr::unnest(moran) %>% 
-  mutate(pysal = ifelse(p_folded_sim <= 0.1, as.character(pysal), NA)) %>% 
-  subset(!is.na(combined_class)) %>%
-  filter(pysal == "Low-Low") %>% 
-  ggplot(aes(x = cityname, y = res, fill = combined_class)) +
+  mutate(pysal = ifelse(p_folded_sim <= 0.1, as.character(pysal), "Not significant")) %>% 
+  subset(!is.na(vulnerability)) %>%
+  filter(pysal == "Low-Low" | pysal == "High-High" | pysal == "Not significant") %>% 
+  ggplot(aes(x = cityname, y = res, fill = vulnerability)) +
   geom_bar(position = "fill", stat = "identity") +
-  scale_fill_manual(name = "Neighbourhood \ntype", values = c("#b2182b", "#ef8a62", "#fddbc7", "#d1e5f0", "#67a9cf", "#2166ac")) +
+  facet_grid(~pysal) +
+  geom_bar(position = "fill", stat = "identity") +
+  scale_fill_manual(name = "Socio-economic \nvulnerability", values = c("#b2182b", "#ef8a62", "#fddbc7", "#d1e5f0", "#67a9cf", "#2166ac")) +
   scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
   labs(x = "", y = "Share of population") +
   theme_minimal()
 
-ggsave(filename = "./figures/other_low_cluster.png", width = 24, height = 20, units = "cm", bg = "white")
+ggsave(filename = "./figures/retail_by_cluster.png", width = 24, height = 20, units = "cm", bg = "white")
 
 #Cluster map
-other_moran %>% 
+green_moran %>% 
   tidyr::unnest(moran) %>% 
   mutate(pysal = ifelse(p_folded_sim <= 0.1, as.character(pysal), NA)) |>
   tm_shape() +
@@ -245,4 +244,37 @@ other_moran %>%
   tm_facets(by = "cityname") +
   tm_scalebar(position = c("left", "bottom"))
 
-tmap_save(filename = "./figures/other_moran.jpg", width = 24, height = 20, units = "cm")
+tmap_save(filename = "./figures/retail_moran.jpg", width = 24, height = 20, units = "cm")
+
+#Urban green
+green_moran <- acc_weighted %>% 
+  mutate(moran = local_moran(acc_green, nb, wt))
+
+#Population by cluster and neighborhood type
+green_moran %>% 
+  tidyr::unnest(moran) %>% 
+  mutate(pysal = ifelse(p_folded_sim <= 0.1, as.character(pysal), "Not significant")) %>% 
+  subset(!is.na(vulnerability)) %>%
+  filter(pysal == "Low-Low" | pysal == "High-High" | pysal == "Not significant") %>% 
+  ggplot(aes(x = cityname, y = res, fill = vulnerability)) +
+  geom_bar(position = "fill", stat = "identity") +
+  facet_grid(~pysal) +
+  geom_bar(position = "fill", stat = "identity") +
+  scale_fill_manual(name = "Socio-economic \nvulnerability", values = c("#b2182b", "#ef8a62", "#fddbc7", "#d1e5f0", "#67a9cf", "#2166ac")) +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
+  labs(x = "", y = "Share of population") +
+  theme_minimal()
+
+ggsave(filename = "./figures/green_by_cluster.png", width = 24, height = 20, units = "cm", bg = "white")
+
+#Cluster map
+green_moran %>% 
+  tidyr::unnest(moran) %>% 
+  mutate(pysal = ifelse(p_folded_sim <= 0.1, as.character(pysal), NA)) |>
+  tm_shape() +
+  tm_polygons(fill = "pysal", title = "Local Moran's I \nclusters\n", textNA = "Not significant", palette = c("#b2182b", "#d1e5f0", "#2166ac")) +
+  tm_layout(legend.frame = FALSE) +
+  tm_facets(by = "cityname") +
+  tm_scalebar(position = c("left", "bottom"))
+
+tmap_save(filename = "./figures/green_moran.jpg", width = 24, height = 20, units = "cm")
