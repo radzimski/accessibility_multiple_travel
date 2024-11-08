@@ -2,6 +2,7 @@ library(dplyr)
 library(ggplot2)
 library(sf)
 library(sfdep)
+library(scales)
 library(tmap)
 
 gdansk <- st_read("./results/gdansk/accessibility_results.gpkg")
@@ -127,11 +128,12 @@ schools_moran %>%
   subset(!is.na(vulnerability)) %>%
   #filter(pysal == "Low-Low" | pysal == "High-High" | pysal ==  "Not significant") %>% 
   ggplot(aes(x = cityname, y = res_0_14, fill = vulnerability)) +
-  geom_bar(position = "fill", stat = "identity") +
+  geom_bar(position = "stack", stat = "identity") +
   facet_grid(~pysal) +
   scale_fill_manual(name = "Socio-economic \nvulnerability", values = c("#b2182b", "#ef8a62", "#fddbc7")) +
-  scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
-  labs(x = "", y = "Share of population") +
+  #scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
+  scale_y_continuous(labels = unit_format(unit = "", scale = 1e-3))+
+  labs(x = "", y = "Number of residents aged 0-14 (thousands)\n") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 
@@ -160,11 +162,12 @@ jobs_moran %>%
   subset(!is.na(vulnerability)) %>%
   #filter(pysal == "Low-Low" | pysal == "High-High" | pysal == "Not significant") %>% 
   ggplot(aes(x = cityname, y = res_15_64 + res_65_, fill = vulnerability)) +
-  geom_bar(position = "fill", stat = "identity") +
+  geom_bar(position = "stack", stat = "identity") +
   facet_grid(~pysal) +
   scale_fill_manual(name = "Socio-economic \nvulnerability", values = c("#b2182b", "#ef8a62", "#fddbc7", "#d1e5f0", "#67a9cf", "#2166ac")) +
-  scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
-  labs(x = "", y = "Share of population") +
+  #scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
+  scale_y_continuous(labels = unit_format(unit = "", scale = 1e-3))+
+  labs(x = "", y = "Number of residents (thousands)\n") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 
@@ -193,12 +196,13 @@ healthcare_moran %>%
   subset(!is.na(vulnerability)) %>%
   #filter(pysal == "Low-Low" | pysal == "High-High" | pysal == "Not significant") %>% 
   ggplot(aes(x = cityname, y = res, fill = vulnerability)) +
-  geom_bar(position = "fill", stat = "identity") +
+  geom_bar(position = "stack", stat = "identity") +
   facet_grid(~pysal) +
-  geom_bar(position = "fill", stat = "identity") +
+  #geom_bar(position = "fill", stat = "identity") +
   scale_fill_manual(name = "Socio-economic \nvulnerability", values = c("#b2182b", "#ef8a62", "#fddbc7", "#d1e5f0", "#67a9cf", "#2166ac")) +
-  scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
-  labs(x = "", y = "Share of population") +
+  #scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
+  scale_y_continuous(labels = unit_format(unit = "", scale = 1e-3))+
+  labs(x = "", y = "Number of residents (thousands)\n") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 
@@ -227,12 +231,13 @@ retail_moran %>%
   subset(!is.na(vulnerability)) %>%
   #filter(pysal == "Low-Low" | pysal == "High-High" | pysal == "Not significant") %>% 
   ggplot(aes(x = cityname, y = res, fill = vulnerability)) +
-  geom_bar(position = "fill", stat = "identity") +
+  geom_bar(position = "stack", stat = "identity") +
   facet_grid(~pysal) +
-  geom_bar(position = "fill", stat = "identity") +
+  #geom_bar(position = "fill", stat = "identity") +
   scale_fill_manual(name = "Socio-economic \nvulnerability", values = c("#b2182b", "#ef8a62", "#fddbc7", "#d1e5f0", "#67a9cf", "#2166ac")) +
-  scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
-  labs(x = "", y = "Share of population") +
+  #scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
+  scale_y_continuous(labels = unit_format(unit = "", scale = 1e-3))+
+  labs(x = "", y = "Number of residents (thousands)\n") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 
@@ -261,12 +266,13 @@ green_moran %>%
   subset(!is.na(vulnerability)) %>%
   #filter(pysal == "Low-Low" | pysal == "High-High" | pysal == "Not significant") %>% 
   ggplot(aes(x = cityname, y = res, fill = vulnerability)) +
-  geom_bar(position = "fill", stat = "identity") +
+  geom_bar(position = "stack", stat = "identity") +
   facet_grid(~pysal) +
-  geom_bar(position = "fill", stat = "identity") +
+  #geom_bar(position = "fill", stat = "identity") +
   scale_fill_manual(name = "Socio-economic \nvulnerability", values = c("#b2182b", "#ef8a62", "#fddbc7", "#d1e5f0", "#67a9cf", "#2166ac")) +
-  scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
-  labs(x = "", y = "Share of population") +
+  #scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
+  scale_y_continuous(labels = unit_format(unit = "", scale = 1e-3))+
+  labs(x = "", y = "Number of residents (thousands)\n") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 
