@@ -11,5 +11,5 @@ Scripts should be run in the following order:
 
 The "origin_grid.gpkg" file may be used to define origin points. It combines data on income and demographics drawn from the following sources:
 
-https://stat.gov.pl/statystyki-eksperymentalne/jakosc-zycia/stratyfikacja-dochodowa-mieszkancow-miast,5,1.html
-https://geo.stat.gov.pl/atom-web/download/?fileId=2795b7ed9098f86ab761352519ba1d85&name=GRID_NSP2021_RES.zip
+- https://stat.gov.pl/statystyki-eksperymentalne/jakosc-zycia/stratyfikacja-dochodowa-mieszkancow-miast,5,1.html
+- https://geo.stat.gov.pl/atom-web/download/?fileId=2795b7ed9098f86ab761352519ba1d85&name=GRID_NSP2021_RES.zip
